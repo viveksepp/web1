@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Campus Integrated Management System — GM University (III Sem CSE)</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React, ReactDOM, Babel for single-file browser runtime -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // --- Inline SVG Icon Component ---
+    const Icon = ({ name, className = "w-4 h-4", ...props }) => {
+      const icons = {
+        layers: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
+        'shield-check': <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>,
+        lock: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+        'alert-circle': <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
+        'id-card': <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>,
+        key: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
+        'arrow-right': <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>,
+        activity: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+        users: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+        'user-check': <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
+        'book-open': <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+        box: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>,
+        calendar: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
+        clock: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+        clipboard: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>,
+        megaphone: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>,
+        upload: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>,
+        download: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>,
+        bookmark: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
+        'log-out': <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
+        search: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>,
+        plus: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>,
+        edit: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+        trash: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>,
+        check: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>,
+        x: <svg className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+      };
+
+      return (
+        <span className={`inline-flex items-center justify-center flex-shrink-0 ${className}`} {...props}>
+          {icons[name] || null}
+        </span>
+      );
+    };
+
+    // --- STORAGE KEYS & SAFE LOADER ---
+    const STORAGE_KEYS = {
+      students: 'smartCampus_students_v3',
+      faculty: 'smartCampus_faculty_v3',
+      courses: 'smartCampus_courses_v3',
+      resources: 'smartCampus_resources_v3',
+      activities: 'smartCampus_activities_v3',
+      timetable: 'smartCampus_timetable_v3',
+      academics: 'smartCampus_academics_v3',
+      bookings: 'smartCampus_bookings_v3',
+      notices: 'smartCampus_notices_v3'
+    };
+
+    const loadFromStorage = (key, fallback) => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : fallback;
+      } catch (err) {
+        return fallback;
+      }
+    };
+
+    const saveToStorage = (key, value) => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (err) {
+        console.error(`Failed to save ${key}:`, err);
+      }
+    };
+
+    // --- DEMO ACCOUNTS & RBAC PERMISSIONS ---
+    const DEMO_ACCOUNTS = [
+      {
+        email: 'admin@campus.edu',
+        password: 'admin123password',
+        name: 'Dr. Sarah Connor',
+        role: 'Admin',
+        department: 'Central Administration',
+        avatarColor: 'bg-indigo-600',
+        badgeColor: 'bg-indigo-100 text-indigo-700 border-indigo-300'
+      },
+      {
+        email: 'faculty@campus.edu',
+        password: 'faculty123password',
+        name: 'Mrs. Savitha K C',
+        role: 'Faculty',
+        department: 'Computer Science and Engineering',
+        avatarColor: 'bg-rose-600',
+        badgeColor: 'bg-rose-100 text-rose-700 border-rose-300'
+      },
+      {
+        email: 'staff@campus.edu',
+        password: 'staff123password',
+        name: 'Ms. Latha K B',
+        role: 'Staff',
+        department: 'Computer Science and Engineering',
+        avatarColor: 'bg-emerald-600',
+        badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-300'
+      },
+      {
+        usn: '24GMU23CS001',
+        email: 'vivek.cs2b@gmu.edu',
+        password: 'student123password',
+        name: 'Vivek',
+        role: 'Student',
+        department: 'Computer Science and Engineering',
+        avatarColor: 'bg-blue-600',
+        badgeColor: 'bg-blue-100 text-blue-700 border-blue-300'
+      }
+    ];
+
+    const ROLE_PERMISSIONS = {
+      Admin: {
+        canManageStudents: true,
+        canManageFaculty: true,
+        canManageCourses: true,
+        canManageResources: true,
+        canManageActivities: true,
+        canEditTimetable: true,
+        canEditAcademics: true,
+        canApproveBookings: true,
+        canPostNotices: true
+      },
+      Faculty: {
+        canManageStudents: false,
+        canManageFaculty: false,
+        canManageCourses: true,
+        canManageResources: false,
+        canManageActivities: true,
+        canEditTimetable: true,
+        canEditAcademics: true,
+        canApproveBookings: false,
+        canPostNotices: true
+      },
+      Staff: {
+        canManageStudents: true,
+        canManageFaculty: true,
+        canManageCourses: false,
+        canManageResources: true,
+        canManageActivities: true,
+        canEditTimetable: false,
+        canEditAcademics: false,
+        canApproveBookings: true,
+        canPostNotices: false
+      },
+      Student: {
+        canManageStudents: false,
+        canManageFaculty: false,
+        canManageCourses: false,
+        canManageResources: false,
+        canManageActivities: false,
+        canEditTimetable: false,
+        canEditAcademics: false,
+        canApproveBookings: false,
+        canPostNotices: false
+      }
+    };
+
+    const initialStudents = [
+      { id: 'STU001', usn: '24GMU23CS001', name: 'Vivek', email: 'vivek.cs2b@gmu.edu', password: 'student123password', phone: '+91 98765 43210', department: 'CSE (CS2B)', year: 'III Sem (2026-27)', status: 'Active' },
+      { id: 'STU002', usn: '24GMU23CS002', name: 'Sophia Chen', email: 'sophia.c@gmu.edu', password: 'sophia123password', phone: '+91 98234 56789', department: 'CSE (CS2B)', year: 'III Sem (2026-27)', status: 'Active' },
+      { id: 'STU003', usn: '24GMU23CS003', name: 'Marcus Vance', email: 'm.vance@gmu.edu', password: 'marcus123password', phone: '+91 91234 87654', department: 'CSE (CS2B)', year: 'III Sem (2026-27)', status: 'On Leave' },
+      { id: 'STU004', usn: '24GMU23CS004', name: 'Emily Davis', email: 'e.davis@gmu.edu', password: 'emily123password', phone: '+91 99887 76655', department: 'CSE (CS2B)', year: 'III Sem (2026-27)', status: 'Active' }
+    ];
+
+    const initialFaculty = [
+      { id: 'FAC101', name: 'Mrs. Savitha K C', email: 'savitha.kc@gmu.edu', password: 'faculty123password', phone: '+91 94480 11223', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: 'UE25CS2301 - Discrete Structure for Computer Science (DSC)' },
+      { id: 'FAC102', name: 'Mr. Ravinandan R Jannu', email: 'ravinandan.rj@gmu.edu', password: 'ravinandan123password', phone: '+91 94480 44556', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: 'UE25CS2302 - Computer Organization and Architecture (COA)' },
+      { id: 'FAC103', name: 'Ms. Latha K B', email: 'latha.kb@gmu.edu', password: 'staff123password', phone: '+91 94480 77889', department: 'CSE (SCST)', designation: 'Class & Course Coordinator', courseCoordinator: 'UE25CS2303 - Object Oriented Programming with Practice (OOPS)' },
+      { id: 'FAC104', name: 'Mrs. Sindhu R.R', email: 'sindhu.rr@gmu.edu', password: 'sindhu123password', phone: '+91 94480 22334', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: 'UE25CS2304 - Operating System (OS)' },
+      { id: 'FAC105', name: 'Ms. Sanjana A T', email: 'sanjana.at@gmu.edu', password: 'sanjana123password', phone: '+91 94480 55667', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: 'CS25TSCS03 - Technical skills (TC)' },
+      { id: 'FAC106', name: 'Mr. Govinda Leeladhara Joshi', email: 'govinda.j@gmu.edu', password: 'govinda123password', phone: '+91 94480 88990', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: 'PS25CASP02 - Life-skills (LS)' },
+      { id: 'FAC107', name: 'Ms. Nanditha G', email: 'nanditha.g@gmu.edu', password: 'nanditha123password', phone: '+91 94480 33445', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: 'SE25SADS01 - Yoga/gymnasium (YG)' }
+    ];
+
+    const initialCourses = [
+      { id: 'UE25CS2301', title: 'Discrete Structure for Computer Science (DSC)', faculty: 'Mrs. Savitha K C', credits: 4, ltp: 'L:3 T:2 P:0', enrolled: 60, status: 'Active (III Sem)' },
+      { id: 'UE25CS2302', title: 'Computer Organization and Architecture (COA)', faculty: 'Mr. Ravinandan R Jannu', credits: 4, ltp: 'L:4 T:0 P:0', enrolled: 60, status: 'Active (III Sem)' },
+      { id: 'UE25CS2303', title: 'Object Oriented Programming with Practice (OOPS)', faculty: 'Ms. Latha K B', credits: 4, ltp: 'L:2 T:2 P:2', enrolled: 60, status: 'Active (III Sem)' },
+      { id: 'UE25CS2304', title: 'Operating System (OS)', faculty: 'Mrs. Sindhu R.R', credits: 4, ltp: 'L:3 T:0 P:2', enrolled: 60, status: 'Active (III Sem)' },
+      { id: 'CS25TSCS03', title: 'Technical skills (TC)', faculty: 'Ms. Sanjana A T', credits: 2, ltp: 'L:0 T:0 P:2', enrolled: 60, status: 'Active (III Sem)' },
+      { id: 'PS25CASP02', title: 'Life-skills (LS)', faculty: 'Mr. Govinda Leeladhara Joshi', credits: 1, ltp: 'L:1 T:0 P:0', enrolled: 60, status: 'Active (III Sem)' },
+      { id: 'SE25SADS01', title: 'Yoga/gymnasium (YG)', faculty: 'Ms. Nanditha G', credits: 1, ltp: 'L:0 T:0 P:2', enrolled: 60, status: 'Active (III Sem)' }
+    ];
+
+    const initialResources = [
+      { id: 'RES-01', name: 'Room C-214 (CS2B Classroom)', category: 'Classrooms', capacity: 70, status: 'Available', specs: 'III Sem CS2B Timetable Room' },
+      { id: 'RES-02', name: 'OOPS Lab / OS Lab (Batch B1 & B2)', category: 'Laboratories', capacity: 35, status: 'Available', specs: 'Practical & PBL Lab Sessions' },
+      { id: 'RES-03', name: 'Central Library', category: 'Facilities', capacity: 150, status: 'Available', specs: 'Scheduled Library Visit Slots' },
+      { id: 'RES-04', name: 'Yoga / Gymnasium Hall', category: 'Facilities', capacity: 60, status: 'Available', specs: 'SE25SADS01 & Club Activities' }
+    ];
+
+    const initialActivities = [
+      { id: 'ACT-01', name: 'Term Examination - I', date: '2026-10-12', time: '09:30 AM', venue: 'Room C-214 / FET Blocks', organizer: 'GMU Examination Cell', status: 'Completed' },
+      { id: 'ACT-02', name: 'Term Examination - II', date: '2026-12-14', time: '09:30 AM', venue: 'Room C-214 / FET Blocks', organizer: 'GMU Examination Cell', status: 'Upcoming' },
+      { id: 'ACT-03', name: 'GMU Student Affairs & ACM Chapter Activities', date: '2026-11-26', time: '02:30 PM', venue: 'Room C-214 / Seminar Hall', organizer: 'GMU Student Affairs / ACM', status: 'Scheduled' }
+    ];
+
+    const TIME_SLOTS = [
+      '08:00 am - 08:50 am',
+      '08:50 am - 09:40 am',
+      '10:10 am - 11:00 am',
+      '11:00 am - 11:50 am',
+      '01:40 pm - 03:20 pm'
+    ];
+
+    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    const initialTimetable = [
+      { id: 'TT-MON-1', day: 'Monday', slot: '08:00 am - 08:50 am', code: 'UE25CS2301', subject: 'DSC', faculty: 'Mrs. Savitha K C', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-MON-2', day: 'Monday', slot: '08:50 am - 09:40 am', code: 'UE25CS2302', subject: 'COA', faculty: 'Mr. Ravinandan R Jannu', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-MON-3', day: 'Monday', slot: '10:10 am - 11:00 am', code: 'UE25CS2304', subject: 'OS', faculty: 'Mrs. Sindhu R.R', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-MON-4', day: 'Monday', slot: '11:00 am - 11:50 am', code: 'UE25CS2303', subject: 'OOPS', faculty: 'Ms. Latha K B', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-MON-5', day: 'Monday', slot: '01:40 pm - 03:20 pm', code: 'UE25CS2303 / UE25CS2304', subject: 'B1: OOPS Lab | B2: OS Lab', faculty: 'Ms. Latha K B / Mrs. Sindhu R.R', room: 'CS Labs 1 & 2', batch: 'B1 / B2' },
+
+      { id: 'TT-TUE-1', day: 'Tuesday', slot: '08:00 am - 08:50 am', code: 'UE25CS2302', subject: 'COA', faculty: 'Mr. Ravinandan R Jannu', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-TUE-2', day: 'Tuesday', slot: '08:50 am - 09:40 am', code: 'UE25CS2301', subject: 'DSC (Tutorial)', faculty: 'Mrs. Savitha K C', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-TUE-3', day: 'Tuesday', slot: '10:10 am - 11:00 am', code: 'UE25CS2303', subject: 'OOPS', faculty: 'Ms. Latha K B', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-TUE-4', day: 'Tuesday', slot: '11:00 am - 11:50 am', code: 'PS25CASP02', subject: 'Life-skills (LS)', faculty: 'Mr. Govinda L Joshi', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-TUE-5', day: 'Tuesday', slot: '01:40 pm - 03:20 pm', code: 'CS25TSCS03', subject: 'Technical Skills Lab', faculty: 'Ms. Sanjana A T', room: 'CS Lab 1', batch: 'All' },
+
+      { id: 'TT-WED-1', day: 'Wednesday', slot: '08:00 am - 08:50 am', code: 'UE25CS2304', subject: 'OS', faculty: 'Mrs. Sindhu R.R', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-WED-2', day: 'Wednesday', slot: '08:50 am - 09:40 am', code: 'UE25CS2302', subject: 'COA', faculty: 'Mr. Ravinandan R Jannu', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-WED-3', day: 'Wednesday', slot: '10:10 am - 11:00 am', code: 'UE25CS2301', subject: 'DSC', faculty: 'Mrs. Savitha K C', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-WED-4', day: 'Wednesday', slot: '11:00 am - 11:50 am', code: 'LIB-01', subject: 'Central Library Visit', faculty: 'Ms. Latha K B', room: 'Central Library', batch: 'All' },
+      { id: 'TT-WED-5', day: 'Wednesday', slot: '01:40 pm - 03:20 pm', code: 'UE25CS2304 / UE25CS2303', subject: 'B1: OS Lab | B2: OOPS Lab', faculty: 'Mrs. Sindhu R.R / Ms. Latha K B', room: 'CS Labs 1 & 2', batch: 'B1 / B2' },
+
+      { id: 'TT-THU-1', day: 'Thursday', slot: '08:00 am - 08:50 am', code: 'UE25CS2301', subject: 'DSC', faculty: 'Mrs. Savitha K C', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-THU-2', day: 'Thursday', slot: '08:50 am - 09:40 am', code: 'UE25CS2304', subject: 'OS', faculty: 'Mrs. Sindhu R.R', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-THU-3', day: 'Thursday', slot: '10:10 am - 11:00 am', code: 'UE25CS2302', subject: 'COA', faculty: 'Mr. Ravinandan R Jannu', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-THU-4', day: 'Thursday', slot: '11:00 am - 11:50 am', code: 'UE25CS2303', subject: 'OOPS (Tutorial)', faculty: 'Ms. Latha K B', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-THU-5', day: 'Thursday', slot: '01:40 pm - 03:20 pm', code: 'SE25SADS01', subject: 'Yoga / Gymnasium', faculty: 'Ms. Nanditha G', room: 'Yoga Hall', batch: 'All' },
+
+      { id: 'TT-FRI-1', day: 'Friday', slot: '08:00 am - 08:50 am', code: 'UE25CS2303', subject: 'OOPS', faculty: 'Ms. Latha K B', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-FRI-2', day: 'Friday', slot: '08:50 am - 09:40 am', code: 'UE25CS2301', subject: 'DSC', faculty: 'Mrs. Savitha K C', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-FRI-3', day: 'Friday', slot: '10:10 am - 11:00 am', code: 'UE25CS2304', subject: 'OS', faculty: 'Mrs. Sindhu R.R', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-FRI-4', day: 'Friday', slot: '11:00 am - 11:50 am', code: 'UE25CS2302', subject: 'COA', faculty: 'Mr. Ravinandan R Jannu', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-FRI-5', day: 'Friday', slot: '01:40 pm - 03:20 pm', code: 'ACM-CLUB', subject: 'Student Affairs & ACM Club', faculty: 'GMU Student Affairs', room: 'Seminar Hall', batch: 'All' },
+
+      { id: 'TT-SAT-1', day: 'Saturday', slot: '08:00 am - 08:50 am', code: 'CS25TSCS03', subject: 'Technical Skills', faculty: 'Ms. Sanjana A T', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-SAT-2', day: 'Saturday', slot: '08:50 am - 09:40 am', code: 'PS25CASP02', subject: 'Life-skills', faculty: 'Mr. Govinda L Joshi', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-SAT-3', day: 'Saturday', slot: '10:10 am - 11:00 am', code: 'MENTOR', subject: 'Proctor / Mentoring', faculty: 'Ms. Latha K B', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-SAT-4', day: 'Saturday', slot: '11:00 am - 11:50 am', code: 'PBL', subject: 'Project Based Learning', faculty: 'All Coordinators', room: 'Room C-214', batch: 'All' },
+      { id: 'TT-SAT-5', day: 'Saturday', slot: '01:40 pm - 03:20 pm', code: 'SPORTS', subject: 'Campus Sports / Open Lab', faculty: 'Physical Education', room: 'Campus Ground', batch: 'All' }
+    ];
+
+    const initialAcademics = [
+      { id: 'AC-01', usn: '24GMU23CS001', courseId: 'UE25CS2301', attended: 28, totalClasses: 32, cie1: 23, cie2: 24 },
+      { id: 'AC-02', usn: '24GMU23CS001', courseId: 'UE25CS2302', attended: 26, totalClasses: 30, cie1: 21, cie2: 22 },
+      { id: 'AC-03', usn: '24GMU23CS001', courseId: 'UE25CS2303', attended: 30, totalClasses: 32, cie1: 24, cie2: 25 },
+      { id: 'AC-04', usn: '24GMU23CS001', courseId: 'UE25CS2304', attended: 27, totalClasses: 30, cie1: 22, cie2: 24 },
+
+      { id: 'AC-05', usn: '24GMU23CS002', courseId: 'UE25CS2301', attended: 30, totalClasses: 32, cie1: 24, cie2: 25 },
+      { id: 'AC-06', usn: '24GMU23CS002', courseId: 'UE25CS2302', attended: 29, totalClasses: 30, cie1: 23, cie2: 24 },
+      { id: 'AC-07', usn: '24GMU23CS002', courseId: 'UE25CS2303', attended: 31, totalClasses: 32, cie1: 25, cie2: 24 },
+      { id: 'AC-08', usn: '24GMU23CS002', courseId: 'UE25CS2304', attended: 28, totalClasses: 30, cie1: 22, cie2: 23 },
+
+      { id: 'AC-09', usn: '24GMU23CS003', courseId: 'UE25CS2301', attended: 21, totalClasses: 32, cie1: 16, cie2: 18 },
+      { id: 'AC-10', usn: '24GMU23CS003', courseId: 'UE25CS2302', attended: 20, totalClasses: 30, cie1: 15, cie2: 17 },
+      { id: 'AC-11', usn: '24GMU23CS003', courseId: 'UE25CS2303', attended: 22, totalClasses: 32, cie1: 18, cie2: 19 },
+      { id: 'AC-12', usn: '24GMU23CS003', courseId: 'UE25CS2304', attended: 20, totalClasses: 30, cie1: 17, cie2: 16 },
+
+      { id: 'AC-13', usn: '24GMU23CS004', courseId: 'UE25CS2301', attended: 27, totalClasses: 32, cie1: 20, cie2: 21 },
+      { id: 'AC-14', usn: '24GMU23CS004', courseId: 'UE25CS2302', attended: 25, totalClasses: 30, cie1: 19, cie2: 21 },
+      { id: 'AC-15', usn: '24GMU23CS004', courseId: 'UE25CS2303', attended: 28, totalClasses: 32, cie1: 22, cie2: 23 },
+      { id: 'AC-16', usn: '24GMU23CS004', courseId: 'UE25CS2304', attended: 26, totalClasses: 30, cie1: 21, cie2: 22 }
+    ];
+
+    const initialBookings = [
+      { id: 'BK-101', resourceId: 'RES-02', resourceName: 'OOPS Lab / OS Lab (Batch B1 & B2)', bookedBy: 'Ms. Latha K B', role: 'Faculty', date: '2026-11-26', timeSlot: '01.40 pm To 2.30 pm', purpose: 'OOPS Practice Lab Batch B1', status: 'Approved' },
+      { id: 'BK-102', resourceId: 'RES-01', resourceName: 'Room C-214 (CS2B Classroom)', bookedBy: 'Vivek (24GMU23CS001)', role: 'Student', date: '2026-11-27', timeSlot: '01.40 pm To 2.30 pm', purpose: 'ACM Coding Peer Session', status: 'Pending' }
+    ];
+
+    const initialNotices = [
+      { id: 'NOT-01', title: 'Term Examination - II Syllabus & Hall Ticket Notice', courseCode: 'ALL', category: 'Circular', author: 'Dr. Sarah Connor (Admin)', date: '2026-11-24', dueDate: '2026-12-14', content: 'Term Examination - II commences on 14/12/2026 in Room C-214 & FET Blocks. Students must maintain minimum 75% attendance across all registered courses.' },
+      { id: 'NOT-02', title: 'OS Lab Record Submission — Inter-Process Synchronization', courseCode: 'UE25CS2304', category: 'Assignment', author: 'Mrs. Sindhu R.R', date: '2026-11-23', dueDate: '2026-11-30', content: 'Submit completed CPU Scheduling and Semaphore/Shared Memory lab programs with execution screenshots during Wednesday Batch B1/B2 lab hours.' },
+      { id: 'NOT-03', title: 'OOPS Mini-Project & Exception Handling Lab Manual', courseCode: 'UE25CS2303', category: 'Study Material', author: 'Ms. Latha K B', date: '2026-11-21', dueDate: '2026-12-05', content: 'Reference templates covering Java packages, interfaces, and custom exceptions are uploaded for the III Sem PBL evaluation.' },
+      { id: 'NOT-04', title: 'COA Unit-4 Pipelining & Memory Hierarchy Practice Set', courseCode: 'UE25CS2302', category: 'Study Material', author: 'Mr. Ravinandan R Jannu', date: '2026-11-20', dueDate: '2026-12-02', content: 'Solved numerical problems on cache mapping, hit ratio, and instruction pipelining hazards for Term Exam - II preparation.' }
+    ];
+
+    function App() {
+      const [currentUser, setCurrentUser] = useState(null);
+      const [loginIdentifier, setLoginIdentifier] = useState('');
+      const [loginPassword, setLoginPassword] = useState('');
+      const [authError, setAuthError] = useState('');
+      const [activeTab, setActiveTab] = useState('dashboard');
+
+      // Core Persisted States
+      const [students, setStudents] = useState(() => loadFromStorage(STORAGE_KEYS.students, initialStudents));
+      const [faculty, setFaculty] = useState(() => loadFromStorage(STORAGE_KEYS.faculty, initialFaculty));
+      const [courses, setCourses] = useState(() => loadFromStorage(STORAGE_KEYS.courses, initialCourses));
+      const [resources, setResources] = useState(() => loadFromStorage(STORAGE_KEYS.resources, initialResources));
+      const [activities, setActivities] = useState(() => loadFromStorage(STORAGE_KEYS.activities, initialActivities));
+      const [timetable, setTimetable] = useState(() => loadFromStorage(STORAGE_KEYS.timetable, initialTimetable));
+      const [academics, setAcademics] = useState(() => loadFromStorage(STORAGE_KEYS.academics, initialAcademics));
+      const [bookings, setBookings] = useState(() => loadFromStorage(STORAGE_KEYS.bookings, initialBookings));
+      const [notices, setNotices] = useState(() => loadFromStorage(STORAGE_KEYS.notices, initialNotices));
+
+      useEffect(() => { saveToStorage(STORAGE_KEYS.students, students); }, [students]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.faculty, faculty); }, [faculty]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.courses, courses); }, [courses]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.resources, resources); }, [resources]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.activities, activities); }, [activities]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.timetable, timetable); }, [timetable]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.academics, academics); }, [academics]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.bookings, bookings); }, [bookings]);
+      useEffect(() => { saveToStorage(STORAGE_KEYS.notices, notices); }, [notices]);
+
+      const [searchQuery, setSearchQuery] = useState('');
+      const [modalType, setModalType] = useState(null);
+      const [toastMsg, setToastMsg] = useState(null);
+
+      // Feature-specific filters & forms
+      const [selectedDay, setSelectedDay] = useState('Monday');
+      const [editingSlot, setEditingSlot] = useState(null);
+
+      const [selectedAcademicCourse, setSelectedAcademicCourse] = useState('UE25CS2301');
+      const [selectedNoticeCourse, setSelectedNoticeCourse] = useState('ALL');
+
+      const [bookingDetails, setBookingDetails] = useState({
+        resourceId: 'RES-01',
+        user: '',
+        date: '2026-11-28',
+        timeSlot: '08:00 am To 8.50 am',
+        purpose: ''
+      });
+      const [bookingStatusMsg, setBookingStatusMsg] = useState(null);
+
+      // CRUD Form States
+      const [newStudent, setNewStudent] = useState({ usn: '', name: '', email: '', password: '', phone: '', department: 'CSE (CS2B)', year: 'III Sem (2026-27)', status: 'Active' });
+      const [editingStudent, setEditingStudent] = useState(null);
+      const [csvInput, setCsvInput] = useState('24GMU23CS005, Rohan Kulkarni, rohan.k@gmu.edu, rohan123password, +91 98450 11223\n24GMU23CS006, Ananya Rao, ananya.r@gmu.edu, ananya123password, +91 98450 44556');
+
+      const [newFaculty, setNewFaculty] = useState({ name: '', email: '', password: '', phone: '', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: '' });
+      const [editingFaculty, setEditingFaculty] = useState(null);
+
+      const [newCourse, setNewCourse] = useState({ id: '', title: '', faculty: 'Mrs. Savitha K C', credits: 4, ltp: 'L:3 T:0 P:0', enrolled: 60, status: 'Active (III Sem)' });
+      const [editingCourse, setEditingCourse] = useState(null);
+
+      const [newResource, setNewResource] = useState({ name: '', category: 'Classrooms', capacity: 60, status: 'Available', specs: '' });
+      const [editingResource, setEditingResource] = useState(null);
+
+      const [newActivity, setNewActivity] = useState({ name: '', date: '', time: '10:00 AM', venue: 'Room C-214', organizer: '', status: 'Scheduled' });
+      const [editingActivity, setEditingActivity] = useState(null);
+
+      const [newNotice, setNewNotice] = useState({ title: '', courseCode: 'UE25CS2304', category: 'Circular', dueDate: '2026-12-05', content: '' });
+
+      const showToast = (text, type = 'success') => {
+        setToastMsg({ text, type });
+        setTimeout(() => setToastMsg(null), 4000);
+      };
+
+      const permissions = useMemo(() => {
+        if (!currentUser) return null;
+        return ROLE_PERMISSIONS[currentUser.role] || ROLE_PERMISSIONS['Student'];
+      }, [currentUser]);
+
+      // All Login Accounts (includes Student USN)
+      const allLoginAccounts = useMemo(() => {
+        const studentLogins = students.map(s => ({
+          usn: s.usn || '',
+          email: s.email,
+          password: s.password || 'student123password',
+          name: s.name,
+          role: 'Student',
+          department: s.department,
+          avatarColor: 'bg-blue-600',
+          badgeColor: 'bg-blue-100 text-blue-700 border-blue-300'
+        }));
+
+        const facultyLogins = faculty.map(f => ({
+          email: f.email,
+          password: f.password || 'faculty123password',
+          name: f.name,
+          role: 'Faculty',
+          department: f.department,
+          avatarColor: 'bg-rose-600',
+          badgeColor: 'bg-rose-100 text-rose-700 border-rose-300'
+        }));
+
+        return [...studentLogins, ...facultyLogins, ...DEMO_ACCOUNTS];
+      }, [students, faculty]);
+
+      const loginAsUser = (userAccount) => {
+        setAuthError('');
+        setSearchQuery('');
+        const displayIdentity = userAccount.usn ? `${userAccount.name} (${userAccount.usn})` : userAccount.name;
+        setBookingDetails(prev => ({ ...prev, user: displayIdentity }));
+        setCurrentUser(userAccount);
+        setActiveTab('dashboard');
+        setLoginIdentifier('');
+        setLoginPassword('');
+      };
+
+      const handleLogin = (e) => {
+        e?.preventDefault();
+        setAuthError('');
+        const identifier = loginIdentifier.trim().toLowerCase();
+
+        if (!identifier) {
+          setAuthError('Please enter your Student USN, Name, or Email address.');
+          return;
+        }
+        if (!loginPassword) {
+          setAuthError('Please enter your security password.');
+          return;
+        }
+
+        const matchedAccount = allLoginAccounts.find(
+          a =>
+            (a.usn && a.usn.toLowerCase() === identifier) ||
+            a.email.toLowerCase() === identifier ||
+            a.name.toLowerCase() === identifier
+        );
+
+        if (!matchedAccount) {
+          setAuthError('Account not found. Check your Student USN or Email, or contact Admin/Staff.');
+          return;
+        }
+
+        if (matchedAccount.password !== loginPassword) {
+          setAuthError('Incorrect password. Please check the password assigned by Admin or Staff.');
+          return;
+        }
+
+        loginAsUser(matchedAccount);
+      };
+
+      const handleLogout = () => {
+        setCurrentUser(null);
+        setActiveTab('dashboard');
+        setSearchQuery('');
+      };
+
+      // --- STUDENT CRUD + CSV BULK IMPORT & EXPORT ---
+      const handleAddStudent = (e) => {
+        e.preventDefault();
+        if (!permissions?.canManageStudents) return;
+        const cleanName = newStudent.name.trim();
+        const cleanUsn = newStudent.usn.trim().toUpperCase();
+        if (!cleanName || !cleanUsn || !newStudent.password.trim()) return;
+
+        if (students.some(s => s.usn?.toUpperCase() === cleanUsn)) {
+          showToast(`USN ${cleanUsn} is already registered.`, 'error');
+          return;
+        }
+
+        const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '');
+        const cleanEmail = newStudent.email.trim() || `${slug || 'student'}@gmu.edu`;
+        const nextNum = students.length > 0 ? Math.max(...students.map(s => parseInt(s.id.replace('STU', ''), 10) || 0)) + 1 : 1;
+        const created = {
+          ...newStudent,
+          usn: cleanUsn,
+          name: cleanName,
+          email: cleanEmail,
+          password: newStudent.password.trim(),
+          id: `STU${String(nextNum).padStart(3, '0')}`
+        };
+        setStudents([...students, created]);
+        setModalType(null);
+        setNewStudent({ usn: '', name: '', email: '', password: '', phone: '', department: 'CSE (CS2B)', year: 'III Sem (2026-27)', status: 'Active' });
+        showToast(`Student ${cleanName} (${cleanUsn}) registered.`);
+      };
+
+      const handleBulkCsvImport = (e) => {
+        e.preventDefault();
+        if (!permissions?.canManageStudents) return;
+        const lines = csvInput.split('\n').map(l => l.trim()).filter(Boolean);
+        let maxNum = students.length > 0 ? Math.max(...students.map(s => parseInt(s.id.replace('STU', ''), 10) || 0)) : 0;
+        const existingUsns = new Set(students.map(s => s.usn?.toUpperCase()));
+        const added = [];
+        let skipped = 0;
+
+        lines.forEach(line => {
+          const parts = line.split(',').map(p => p.trim());
+          if (parts.length < 2) return;
+          const [rawUsn, rawName, rawEmail, rawPass, rawPhone] = parts;
+          const usn = rawUsn.toUpperCase();
+          if (!usn || !rawName || existingUsns.has(usn)) {
+            skipped++;
+            return;
+          }
+          existingUsns.add(usn);
+          maxNum++;
+          const slug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '.');
+          added.push({
+            id: `STU${String(maxNum).padStart(3, '0')}`,
+            usn,
+            name: rawName,
+            email: rawEmail || `${slug}@gmu.edu`,
+            password: rawPass || 'student123password',
+            phone: rawPhone || '+91 90000 00000',
+            department: 'CSE (CS2B)',
+            year: 'III Sem (2026-27)',
+            status: 'Active'
+          });
+        });
+
+        if (added.length > 0) {
+          setStudents([...students, ...added]);
+        }
+        setModalType(null);
+        showToast(`Imported ${added.length} students${skipped > 0 ? ` (${skipped} duplicate/invalid skipped)` : ''}.`);
+      };
+
+      const handleExportStudentsCsv = () => {
+        const header = 'ID,USN,Name,Email,Phone,Department,Semester,Status';
+        const rows = students.map(s =>
+          [s.id, s.usn, `"${s.name}"`, s.email, `"${s.phone}"`, `"${s.department}"`, `"${s.year}"`, s.status].join(',')
+        );
+        const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'GMU_CS2B_Students.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('Exported student directory to GMU_CS2B_Students.csv');
+      };
+
+      const handleUpdateStudent = (e) => {
+        e.preventDefault();
+        if (!permissions?.canManageStudents) return;
+        const updated = {
+          ...editingStudent,
+          usn: editingStudent.usn.trim().toUpperCase(),
+          name: editingStudent.name.trim()
+        };
+        setStudents(students.map(s => (s.id === updated.id ? updated : s)));
+        setModalType(null);
+        setEditingStudent(null);
+        showToast(`Updated record for ${updated.name} (${updated.usn}).`);
+      };
+
+      const handleDeleteStudent = (id) => {
+        if (!permissions?.canManageStudents) return;
+        setStudents(students.filter(s => s.id !== id));
+        showToast('Student record removed.');
+      };
+
+      // --- FACULTY CRUD ---
+      const handleAddFaculty = (e) => {
+        e.preventDefault();
+        if (!permissions?.canManageFaculty) return;
+        const cleanName = newFaculty.name.trim();
+        if (!cleanName || !newFaculty.password.trim()) return;
+        const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '');
+        const cleanEmail = newFaculty.email.trim() || `${slug || 'faculty'}@gmu.edu`;
+        const nextNum = faculty.length > 0 ? Math.max(...faculty.map(f => parseInt(f.id.replace('FAC', ''), 10) || 100)) + 1 : 101;
+        const created = {
+          ...newFaculty,
+          name: cleanName,
+          email: cleanEmail,
+          password: newFaculty.password.trim(),
+          id: `FAC${nextNum}`
+        };
+        setFaculty([...faculty, created]);
+        setModalType(null);
+        setNewFaculty({ name: '', email: '', password: '', phone: '', department: 'CSE (SCST)', designation: 'Course Coordinator', courseCoordinator: '' });
+        showToast(`Faculty ${cleanName} registered.`);
+      };
+
+      const handleUpdateFaculty = (e) => {
+        e.preventDefault();
+        if (!permissions?.canManageFaculty) return;
+        setFaculty(faculty.map(f => (f.id === editingFaculty.id ? editingFaculty : f)));
+        setModalType(null);
+        setEditingFaculty(null);
+        showToast('Faculty record updated.');
+      };
+
+      const handleDeleteFaculty = (id) => {
+        if (!permissions?.canManageFaculty) return;
+        setFaculty(faculty.filter(f => f.id !== id));
+      };
+
+      // --- COURSE CRUD ---
+      const handleAddCourse = (e) => {
+        e.preventDefault();
+        const formattedCode = newCourse.id.trim().toUpperCase() || `UE25CS230${courses.length + 1}`;
+        const created = {
+          ...newCourse,
+          id: formattedCode,
+          ltp: newCourse.ltp.trim() || 'L:3 T:0 P:0',
+          credits: Number(newCourse.credits),
+          enrolled: Number(newCourse.enrolled)
+        };
+        setCourses([...courses, created]);
+        setModalType(null);
+        setNewCourse({ id: '', title: '', faculty: faculty[0]?.name || 'Mrs. Savitha K C', credits: 4, ltp: 'L:3 T:0 P:0', enrolled: 60, status: 'Active (III Sem)' });
+        showToast(`Course ${formattedCode} added.`);
+      };
+
+      const handleUpdateCourse = (e) => {
+        e.preventDefault();
+        setCourses(courses.map(c => (c.id === editingCourse.id ? { ...editingCourse, credits: Number(editingCourse.credits), enrolled: Number(editingCourse.enrolled) } : c)));
+        setModalType(null);
+        setEditingCourse(null);
+        showToast('Course updated.');
+      };
+
+      const handleDeleteCourse = (id) => {
+        setCourses(courses.filter(c => c.id !== id));
+      };
+
+      // --- RESOURCE CRUD ---
+      const handleAddResource = (e) => {
+        e.preventDefault();
+        const nextNum = resources.length > 0 ? Math.max(...resources.map(r => parseInt(r.id.replace('RES-', ''), 10) || 0)) + 1 : 1;
+        const created = { ...newResource, id: `RES-${String(nextNum).padStart(2, '0')}`, capacity: Number(newResource.capacity) };
+        setResources([...resources, created]);
+        setModalType(null);
+        setNewResource({ name: '', category: 'Classrooms', capacity: 60, status: 'Available', specs: '' });
+      };
+
+      const handleUpdateResource = (e) => {
+        e.preventDefault();
+        setResources(resources.map(r => (r.id === editingResource.id ? { ...editingResource, capacity: Number(editingResource.capacity) } : r)));
+        setModalType(null);
+        setEditingResource(null);
+      };
+
+      const handleDeleteResource = (id) => {
+        setResources(resources.filter(r => r.id !== id));
+      };
+
+      // --- ACTIVITY CRUD ---
+      const handleAddActivity = (e) => {
+        e.preventDefault();
+        const nextNum = activities.length > 0 ? Math.max(...activities.map(a => parseInt(a.id.replace('ACT-', ''), 10) || 0)) + 1 : 1;
+        const created = { ...newActivity, id: `ACT-${String(nextNum).padStart(2, '0')}` };
+        setActivities([...activities, created]);
+        setModalType(null);
+        setNewActivity({ name: '', date: '', time: '10:00 AM', venue: 'Room C-214', organizer: '', status: 'Scheduled' });
+      };
+
+      const handleUpdateActivity = (e) => {
+        e.preventDefault();
+        setActivities(activities.map(a => (a.id === editingActivity.id ? editingActivity : a)));
+        setModalType(null);
+        setEditingActivity(null);
+      };
+
+      const handleDeleteActivity = (id) => {
+        setActivities(activities.filter(a => a.id !== id));
+      };
+
+      // --- TIMETABLE UPDATE ---
+      const handleSaveTimetableSlot = (e) => {
+        e.preventDefault();
+        if (!permissions?.canEditTimetable || !editingSlot) return;
+        setTimetable(timetable.map(item => (item.id === editingSlot.id ? editingSlot : item)));
+        setModalType(null);
+        setEditingSlot(null);
+        showToast('Timetable period updated.');
+      };
+
+      // --- ATTENDANCE & CIE MARKS HANDLERS ---
+      const getAcademicRecord = (usn, courseId) => {
+        return academics.find(a => a.usn === usn && a.courseId === courseId) || {
+          id: `${usn}-${courseId}`,
+          usn,
+          courseId,
+          attended: 0,
+          totalClasses: 30,
+          cie1: 0,
+          cie2: 0
+        };
+      };
+
+      const handleMarkAttendance = (usn, courseId, isPresent) => {
+        if (!permissions?.canEditAcademics) return;
+        const existing = academics.find(a => a.usn === usn && a.courseId === courseId);
+        if (existing) {
+          setAcademics(academics.map(a =>
+            a.usn === usn && a.courseId === courseId
+              ? { ...a, attended: a.attended + (isPresent ? 1 : 0), totalClasses: a.totalClasses + 1 }
+              : a
+          ));
+        } else {
+          setAcademics([
+            ...academics,
+            { id: `AC-${Date.now()}`, usn, courseId, attended: isPresent ? 1 : 0, totalClasses: 1, cie1: 0, cie2: 0 }
+          ]);
+        }
+        showToast(`Marked ${isPresent ? 'Present' : 'Absent'} for ${usn}`);
+      };
+
+      const handleUpdateCieScore = (usn, courseId, field, rawVal) => {
+        if (!permissions?.canEditAcademics) return;
+        const val = Math.max(0, Math.min(25, Number(rawVal) || 0));
+        const existing = academics.find(a => a.usn === usn && a.courseId === courseId);
+        if (existing) {
+          setAcademics(academics.map(a =>
+            a.usn === usn && a.courseId === courseId ? { ...a, [field]: val } : a
+          ));
+        } else {
+          setAcademics([
+            ...academics,
+            { id: `AC-${Date.now()}`, usn, courseId, attended: 24, totalClasses: 30, cie1: field === 'cie1' ? val : 0, cie2: field === 'cie2' ? val : 0 }
+          ]);
+        }
+      };
+
+      // --- SLOT-BASED BOOKING ENGINE ---
+      const handleSimulateBooking = (e) => {
+        e.preventDefault();
+        const targetRes = resources.find(r => r.id === bookingDetails.resourceId);
+        if (!targetRes) return;
+
+        if (targetRes.status === 'Maintenance') {
+          setBookingStatusMsg({
+            type: 'error',
+            text: `Booking Declined: ${targetRes.name} is currently under Maintenance.`
+          });
+          return;
+        }
+
+        const conflict = bookings.find(
+          b =>
+            b.resourceId === targetRes.id &&
+            b.date === bookingDetails.date &&
+            b.timeSlot === bookingDetails.timeSlot &&
+            b.status !== 'Rejected'
+        );
+
+        if (conflict) {
+          setBookingStatusMsg({
+            type: 'error',
+            text: `Slot Conflict: ${targetRes.name} is already booked on ${bookingDetails.date} (${bookingDetails.timeSlot}) by ${conflict.bookedBy}.`
+          });
+          return;
+        }
+
+        const newBooking = {
+          id: `BK-${String(bookings.length + 101)}`,
+          resourceId: targetRes.id,
+          resourceName: targetRes.name,
+          bookedBy: bookingDetails.user || currentUser.name,
+          role: currentUser.role,
+          date: bookingDetails.date,
+          timeSlot: bookingDetails.timeSlot,
+          purpose: bookingDetails.purpose.trim() || 'Academic / Lab Session',
+          status: permissions.canApproveBookings ? 'Approved' : 'Pending'
+        };
+
+        setBookings([newBooking, ...bookings]);
+        setBookingDetails(prev => ({ ...prev, purpose: '' }));
+        setBookingStatusMsg({
+          type: 'success',
+          text: permissions.canApproveBookings
+            ? `Reservation Approved! ${targetRes.name} booked for ${newBooking.date} (${newBooking.timeSlot}).`
+            : `Reservation Request Submitted! Awaiting Admin/Staff approval for ${targetRes.name}.`
+        });
+        setTimeout(() => setBookingStatusMsg(null), 4500);
+      };
+
+      const handleBookingStatusChange = (bookingId, newStatus) => {
+        if (!permissions?.canApproveBookings) return;
+        setBookings(bookings.map(b => (b.id === bookingId ? { ...b, status: newStatus } : b)));
+        showToast(`Booking ${bookingId} marked as ${newStatus}.`);
+      };
+
+      const handleCancelBooking = (bookingId) => {
+        setBookings(bookings.filter(b => b.id !== bookingId));
+        showToast(`Booking ${bookingId} cancelled.`);
+      };
+
+      // --- NOTICE BOARD CRUD ---
+      const handleAddNotice = (e) => {
+        e.preventDefault();
+        if (!permissions?.canPostNotices) return;
+        const created = {
+          id: `NOT-${String(notices.length + 1).padStart(2, '0')}`,
+          title: newNotice.title.trim(),
+          courseCode: newNotice.courseCode,
+          category: newNotice.category,
+          author: `${currentUser.name} (${currentUser.role})`,
+          date: '2026-11-25',
+          dueDate: newNotice.dueDate || '2026-12-10',
+          content: newNotice.content.trim()
+        };
+        setNotices([created, ...notices]);
+        setModalType(null);
+        setNewNotice({ title: '', courseCode: 'UE25CS2304', category: 'Circular', dueDate: '2026-12-05', content: '' });
+        showToast('Circular / Study Material published.');
+      };
+
+      const handleDeleteNotice = (id) => {
+        if (!permissions?.canPostNotices) return;
+        setNotices(notices.filter(n => n.id !== id));
+      };
+
+      // Filtered Lists
+      const filteredStudents = useMemo(() => students.filter(s =>
+        (s.usn && s.usn.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.department.toLowerCase().includes(searchQuery.toLowerCase())
+      ), [students, searchQuery]);
+
+      const filteredFaculty = useMemo(() => faculty.filter(f =>
+        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        f.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (f.courseCoordinator && f.courseCoordinator.toLowerCase().includes(searchQuery.toLowerCase()))
+      ), [faculty, searchQuery]);
+
+      const filteredCourses = useMemo(() => courses.filter(c =>
+        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.faculty.toLowerCase().includes(searchQuery.toLowerCase())
+      ), [courses, searchQuery]);
+
+      const filteredResources = useMemo(() => resources.filter(r =>
+        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.category.toLowerCase().includes(searchQuery.toLowerCase())
+      ), [resources, searchQuery]);
+
+      const filteredActivities = useMemo(() => activities.filter(a =>
+        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.venue.toLowerCase().includes(searchQuery.toLowerCase())
+      ), [activities, searchQuery]);
+
+      const filteredNotices = useMemo(() => notices.filter(n =>
+        (selectedNoticeCourse === 'ALL' || n.courseCode === selectedNoticeCourse || n.courseCode === 'ALL') &&
+        (n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          n.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          n.courseCode.toLowerCase().includes(searchQuery.toLowerCase()))
+      ), [notices, selectedNoticeCourse, searchQuery]);
+
+      const totalCourseCredits = useMemo(
+        () => courses.reduce((sum, c) => sum + (Number(c.credits) || 0), 0),
+        [courses]
+      );
+
+      // Student personal academic summary
+      const studentPersonalSummary = useMemo(() => {
+        if (!currentUser || currentUser.role !== 'Student' || !currentUser.usn) return [];
+        return courses.slice(0, 4).map(c => {
+          const rec = getAcademicRecord(currentUser.usn, c.id);
+          const pct = rec.totalClasses > 0 ? Math.round((rec.attended / rec.totalClasses) * 100) : 0;
+          return { course: c, ...rec, pct };
+        });
+      }, [currentUser, courses, academics]);
+
+      // --- LOGIN SCREEN ---
+      if (!currentUser) {
+        return (
+          <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+            <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="w-full max-w-4xl bg-slate-800 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 z-10 animate-fade-in">
+              <div className="md:col-span-5 bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 p-8 text-white flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-700/80">
+                <div>
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-600/40">
+                      <Icon name="layers" className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold tracking-tight text-white">SmartCampus</h1>
+                      <p className="text-xs text-indigo-300 font-medium">GM University • III Sem CSE (CS2B)</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                    Complete ERP & Academic Portal featuring USN Student Login, Weekly Timetable, Attendance & CIE Marks, Slot Bookings, and Study Circulars.
+                  </p>
+
+                  <div className="space-y-2.5">
+                    <div className="flex items-center space-x-2.5 text-xs text-slate-300">
+                      <Icon name="id-card" className="w-4 h-4 text-blue-400" />
+                      <span>Student sign in via USN Number or Email</span>
+                    </div>
+                    <div className="flex items-center space-x-2.5 text-xs text-slate-300">
+                      <Icon name="clipboard" className="w-4 h-4 text-emerald-400" />
+                      <span>Live Attendance & Term Exam I/II CIE Marks</span>
+                    </div>
+                    <div className="flex items-center space-x-2.5 text-xs text-slate-300">
+                      <Icon name="clock" className="w-4 h-4 text-amber-400" />
+                      <span>CS2B Weekly Timetable & Slot Conflict Booking</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-4 border-t border-slate-800 text-[11px] text-slate-400">
+                  Students can log in using their assigned <strong>USN Number</strong> (e.g. <span className="font-mono text-indigo-300">24GMU23CS001</span>) and password.
+                </div>
+              </div>
+
+              <div className="md:col-span-7 p-8 bg-slate-800 flex flex-col justify-between space-y-6">
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold text-white">Account Sign In</h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Students: Enter your <strong>USN Number</strong> (or Email/Name) and Password. Faculty/Staff/Admin: Enter Email or Name.
+                    </p>
+                  </div>
+
+                  {authError && (
+                    <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2">
+                      <Icon name="alert-circle" className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                      <span>{authError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleLogin} className="space-y-3.5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Student USN / Email / Name</label>
+                      <div className="relative">
+                        <Icon name="id-card" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="e.g. 24GMU23CS001 or admin@campus.edu"
+                          value={loginIdentifier}
+                          onChange={(e) => setLoginIdentifier(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Security Password</label>
+                      <div className="relative">
+                        <Icon name="key" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="password"
+                          placeholder="Enter assigned password"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition-all shadow-lg shadow-indigo-600/30"
+                    >
+                      Sign In to System Portal
+                    </button>
+                  </form>
+                </div>
+
+                <div className="pt-4 border-t border-slate-700/60">
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
+                    Quick Demo Role Select (One-Click)
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {DEMO_ACCOUNTS.map((acc) => (
+                      <button
+                        type="button"
+                        key={acc.role}
+                        onClick={() => loginAsUser(acc)}
+                        className="p-2.5 bg-slate-900/80 hover:bg-slate-700 border border-slate-700 rounded-xl text-left transition-all group flex items-center justify-between"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center space-x-1.5">
+                            <span className={`w-2 h-2 rounded-full ${acc.avatarColor}`}></span>
+                            <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">{acc.role}</p>
+                          </div>
+                          <p className="text-[10px] text-slate-400 truncate mt-0.5 font-mono">
+                            {acc.usn ? `${acc.usn} (${acc.name})` : acc.email}
+                          </p>
+                        </div>
+                        <Icon name="arrow-right" className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const pendingBookingsCount = bookings.filter(b => b.status === 'Pending').length;
+
+      return (
+        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col md:flex-row">
+          {/* SIDEBAR */}
+          <aside className="w-full md:w-72 bg-slate-900 text-slate-100 flex-shrink-0 flex flex-col justify-between border-r border-slate-800">
+            <div>
+              <div className="p-5 border-b border-slate-800 flex items-center space-x-3">
+                <div className="p-2.5 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-600/30">
+                  <Icon name="layers" className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="font-bold text-lg leading-tight text-white">SmartCampus</h1>
+                  <p className="text-xs text-slate-400 font-medium">III Sem CSE • CS2B</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 mx-4 my-3 bg-slate-800/80 rounded-xl border border-slate-700/60">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Active Role</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${currentUser.badgeColor}`}>
+                    {currentUser.role}
+                  </span>
+                </div>
+                <p className="text-xs text-white font-bold truncate">{currentUser.name}</p>
+                {currentUser.usn && (
+                  <p className="text-[11px] font-mono text-indigo-300 truncate mt-0.5">USN: {currentUser.usn}</p>
+                )}
+              </div>
+
+              <nav className="px-3 space-y-1">
+                <div className="px-3 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Academics & Schedule</div>
+                <button type="button" onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'dashboard' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <Icon name="activity" className="w-4 h-4" />
+                  <span>Dashboard Overview</span>
+                </button>
+                <button type="button" onClick={() => setActiveTab('timetable')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'timetable' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="clock" className="w-4 h-4 text-cyan-400" />
+                    <span>Weekly Timetable</span>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">CS2B</span>
+                </button>
+                <button type="button" onClick={() => setActiveTab('academics')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'academics' ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="clipboard" className="w-4 h-4 text-teal-400" />
+                    <span>Attendance & CIE Marks</span>
+                  </div>
+                </button>
+                <button type="button" onClick={() => setActiveTab('notices')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'notices' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="megaphone" className="w-4 h-4 text-orange-400" />
+                    <span>Notices & Study Hub</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{notices.length}</span>
+                </button>
+
+                <div className="px-3 pt-3 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Campus Administration</div>
+                <button type="button" onClick={() => setActiveTab('students')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'students' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="users" className="w-4 h-4 text-blue-400" />
+                    <span>Student Directory</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{students.length}</span>
+                </button>
+                <button type="button" onClick={() => setActiveTab('faculty')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'faculty' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="user-check" className="w-4 h-4 text-rose-400" />
+                    <span>Faculty Directory</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{faculty.length}</span>
+                </button>
+                <button type="button" onClick={() => setActiveTab('courses')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'courses' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="book-open" className="w-4 h-4 text-amber-400" />
+                    <span>Course Curriculum</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{courses.length}</span>
+                </button>
+                <button type="button" onClick={() => setActiveTab('resources')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'resources' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="box" className="w-4 h-4 text-emerald-400" />
+                    <span>Facilities & Rooms</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{resources.length}</span>
+                </button>
+                <button type="button" onClick={() => setActiveTab('bookings')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'bookings' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="bookmark" className="w-4 h-4 text-indigo-400" />
+                    <span>Slot Bookings</span>
+                  </div>
+                  {pendingBookingsCount > 0 && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">{pendingBookingsCount}</span>
+                  )}
+                </button>
+                <button type="button" onClick={() => setActiveTab('activities')} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${activeTab === 'activities' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'text-slate-300 hover:bg-slate-800'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Icon name="calendar" className="w-4 h-4 text-purple-400" />
+                    <span>Exams & Events</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{activities.length}</span>
+                </button>
+              </nav>
+            </div>
+
+            <div className="p-4 border-t border-slate-800 mt-4">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 text-slate-300 rounded-lg text-xs font-semibold transition-colors"
+              >
+                <Icon name="log-out" className="w-4 h-4" />
+                <span>Sign Out ({currentUser.role})</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* MAIN CONTENT */}
+          <main className="flex-1 flex flex-col min-w-0">
+            {/* TOP HEADER */}
+            <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-bold text-slate-800 capitalize">
+                  {activeTab === 'dashboard' ? 'System Dashboard & Operations' : `${activeTab.replace('-', ' ')} Module`}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Welcome, <strong className="text-slate-700">{currentUser.name}</strong>{currentUser.usn ? ` (${currentUser.usn})` : ''} • GM University • III Sem CSE (CS2B) • Room C-214
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64">
+                  <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search USN, course, notice..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            </header>
+
+            {toastMsg && (
+              <div className={`mx-6 mt-4 px-4 py-2.5 rounded-xl text-xs font-semibold border animate-fade-in ${
+                toastMsg.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              }`}>
+                {toastMsg.text}
+              </div>
+            )}
+
+            {/* TAB PANELS */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+              
+              {/* --- DASHBOARD OVERVIEW --- */}
+              {activeTab === 'dashboard' && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button type="button" onClick={() => setActiveTab('students')} className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-300 shadow-sm flex items-center justify-between text-left transition-all group">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-600">Enrolled Students</p>
+                        <p className="text-2xl font-black text-slate-800 mt-1">{students.length}</p>
+                        <span className="text-[10px] text-emerald-600 font-semibold mt-1 inline-block">USN + CSV Import →</span>
+                      </div>
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><Icon name="users" className="w-6 h-6" /></div>
+                    </button>
+
+                    <button type="button" onClick={() => setActiveTab('timetable')} className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-cyan-300 shadow-sm flex items-center justify-between text-left transition-all group">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-cyan-600">Weekly Schedule</p>
+                        <p className="text-2xl font-black text-slate-800 mt-1">30 <span className="text-xs font-semibold text-slate-500">Periods</span></p>
+                        <span className="text-[10px] text-cyan-600 font-semibold mt-1 inline-block">Mon–Sat C-214 →</span>
+                      </div>
+                      <div className="p-3 bg-cyan-50 text-cyan-600 rounded-xl"><Icon name="clock" className="w-6 h-6" /></div>
+                    </button>
+
+                    <button type="button" onClick={() => setActiveTab('academics')} className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-teal-300 shadow-sm flex items-center justify-between text-left transition-all group">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-teal-600">Attendance & CIE</p>
+                        <p className="text-2xl font-black text-slate-800 mt-1">{courses.length} <span className="text-xs font-semibold text-slate-500">Subjects</span></p>
+                        <span className="text-[10px] text-teal-600 font-semibold mt-1 inline-block">Term I & II Marks →</span>
+                      </div>
+                      <div className="p-3 bg-teal-50 text-teal-600 rounded-xl"><Icon name="clipboard" className="w-6 h-6" /></div>
+                    </button>
+
+                    <button type="button" onClick={() => setActiveTab('bookings')} className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 shadow-sm flex items-center justify-between text-left transition-all group">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-indigo-600">Slot Bookings</p>
+                        <p className="text-2xl font-black text-slate-800 mt-1">{bookings.length}</p>
+                        <span className="text-[10px] text-indigo-600 font-semibold mt-1 inline-block">{pendingBookingsCount} pending approval →</span>
+                      </div>
+                      <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><Icon name="bookmark" className="w-6 h-6" /></div>
+                    </button>
+                  </div>
+
+                  {/* Student Personal USN Academic Card when logged in as Student */}
+                  {currentUser.role === 'Student' && studentPersonalSummary.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-blue-200 p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-800">My Academic Snapshot — USN: <span className="font-mono text-blue-700">{currentUser.usn}</span></h3>
+                          <p className="text-xs text-slate-500">Core III Sem CSE subjects attendance & internal assessment summary</p>
+                        </div>
+                        <button type="button" onClick={() => setActiveTab('academics')} className="text-xs font-semibold text-blue-600 hover:underline">Full Report →</button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {studentPersonalSummary.map(item => (
+                          <div key={item.course.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-[10px] font-mono font-bold text-indigo-600">{item.course.id}</span>
+                            <p className="text-xs font-bold text-slate-800 truncate mt-0.5">{item.course.title}</p>
+                            <div className="mt-2.5 flex items-center justify-between text-xs">
+                              <span className="text-slate-500">Attendance:</span>
+                              <span className={`font-bold ${item.pct >= 75 ? 'text-emerald-600' : 'text-rose-600'}`}>{item.pct}% ({item.attended}/{item.totalClasses})</span>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between text-xs">
+                              <span className="text-slate-500">CIE-I / CIE-II:</span>
+                              <span className="font-bold text-slate-800">{item.cie1}/25 • {item.cie2}/25</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-bold text-slate-800">Latest Circulars & Assignment Deadlines</h3>
+                        <button type="button" onClick={() => setActiveTab('notices')} className="text-xs font-semibold text-indigo-600 hover:underline">Open Notice Hub</button>
+                      </div>
+                      <div className="space-y-3">
+                        {notices.slice(0, 3).map(n => (
+                          <div key={n.id} className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-start justify-between gap-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">{n.courseCode}</span>
+                                <span className="text-[10px] font-semibold text-slate-500">{n.category} • Due: {n.dueDate}</span>
+                              </div>
+                              <p className="text-xs font-bold text-slate-800 mt-1">{n.title}</p>
+                              <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{n.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800 mb-2">Wednesday CS2B Schedule Preview</h3>
+                        <p className="text-xs text-slate-500 mb-3">Room C-214 & Batch B1/B2 Lab Rotation</p>
+                        <div className="space-y-2">
+                          {timetable.filter(t => t.day === 'Wednesday').slice(0, 4).map(slot => (
+                            <div key={slot.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 border border-slate-200/70">
+                              <span className="font-mono text-[11px] text-slate-500">{slot.slot.split(' - ')[0]}</span>
+                              <span className="font-bold text-slate-800">{slot.subject}</span>
+                              <span className="text-[11px] text-indigo-600 font-medium">{slot.room}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => setActiveTab('timetable')} className="mt-4 w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-all">
+                        Open Full Weekly Timetable
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- 1. INTERACTIVE WEEKLY TIMETABLE TAB --- */}
+              {activeTab === 'timetable' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">III Sem CSE (CS2B) Weekly Class Timetable</h3>
+                      <p className="text-xs text-slate-500">Room C-214 & Batch B1 / B2 Practical Labs. {permissions.canEditTimetable ? 'Click Edit on any slot to reassign.' : 'Read-only student schedule.'}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DAYS.map(day => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => setSelectedDay(day)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                            selectedDay === day ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                        <tr>
+                          <th className="p-4">Time Slot</th>
+                          <th className="p-4">Subject Code</th>
+                          <th className="p-4">Course / Lab Session</th>
+                          <th className="p-4">Faculty</th>
+                          <th className="p-4">Room / Lab</th>
+                          <th className="p-4">Batch</th>
+                          {permissions.canEditTimetable && <th className="p-4 text-right">Action</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {timetable.filter(t => t.day === selectedDay).map(slot => (
+                          <tr key={slot.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-4 font-mono font-semibold text-slate-700">{slot.slot}</td>
+                            <td className="p-4 font-mono font-bold text-indigo-600">{slot.code}</td>
+                            <td className="p-4 font-bold text-slate-800">{slot.subject}</td>
+                            <td className="p-4 text-slate-600">{slot.faculty}</td>
+                            <td className="p-4 text-slate-600 font-medium">{slot.room}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                slot.batch === 'All' ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}>{slot.batch}</span>
+                            </td>
+                            {permissions.canEditTimetable && (
+                              <td className="p-4 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingSlot(slot); setModalType('editTimetableSlot'); }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded font-semibold text-[11px]"
+                                >
+                                  <Icon name="edit" className="w-3.5 h-3.5" />
+                                  <span>Edit</span>
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* --- 2. STUDENT USN ATTENDANCE & CIE MARKS TRACKER --- */}
+              {activeTab === 'academics' && (
+                <div className="space-y-4 animate-fade-in">
+                  {currentUser.role === 'Student' ? (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800">My Attendance & Internal Assessment (CIE) Report</h3>
+                        <p className="text-xs text-slate-500">Student: <strong>{currentUser.name}</strong> • USN: <strong className="font-mono text-blue-700">{currentUser.usn}</strong> • Minimum 75% attendance required.</p>
+                      </div>
+                      <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                            <tr>
+                              <th className="p-4">Subject Code & Title</th>
+                              <th className="p-4">Coordinator</th>
+                              <th className="p-4">Classes Attended</th>
+                              <th className="p-4">Attendance %</th>
+                              <th className="p-4">Term Exam - I (25)</th>
+                              <th className="p-4">Term Exam - II (25)</th>
+                              <th className="p-4">Average CIE</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200">
+                            {courses.slice(0, 5).map(c => {
+                              const rec = getAcademicRecord(currentUser.usn, c.id);
+                              const pct = rec.totalClasses > 0 ? Math.round((rec.attended / rec.totalClasses) * 100) : 0;
+                              const avg = ((Number(rec.cie1) + Number(rec.cie2)) / 2).toFixed(1);
+                              return (
+                                <tr key={c.id} className="hover:bg-slate-50">
+                                  <td className="p-4">
+                                    <span className="font-mono font-bold text-indigo-600 block">{c.id}</span>
+                                    <span className="font-bold text-slate-800">{c.title}</span>
+                                  </td>
+                                  <td className="p-4 text-slate-600">{c.faculty}</td>
+                                  <td className="p-4 font-semibold text-slate-700">{rec.attended} / {rec.totalClasses}</td>
+                                  <td className="p-4">
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                                      pct >= 75 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+                                    }`}>
+                                      {pct}% {pct < 75 ? '(Shortage)' : '(Eligible)'}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 font-bold text-slate-800">{rec.cie1} / 25</td>
+                                  <td className="p-4 font-bold text-slate-800">{rec.cie2} / 25</td>
+                                  <td className="p-4 font-bold text-indigo-700">{avg} / 25</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-800">Subject Attendance & CIE Marks Register</h3>
+                          <p className="text-xs text-slate-500">
+                            {permissions.canEditAcademics
+                              ? 'Mark live attendance (+Present / +Absent) and enter Term Exam I & II scores (max 25).'
+                              : 'View-only attendance and internal assessment register.'}
+                          </p>
+                        </div>
+                        <select
+                          value={selectedAcademicCourse}
+                          onChange={(e) => setSelectedAcademicCourse(e.target.value)}
+                          className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                        >
+                          {courses.map(c => (
+                            <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                            <tr>
+                              <th className="p-4">USN Number</th>
+                              <th className="p-4">Student Name</th>
+                              <th className="p-4">Attended / Total</th>
+                              <th className="p-4">Attendance %</th>
+                              {permissions.canEditAcademics && <th className="p-4">Mark Attendance</th>}
+                              <th className="p-4">Term Exam - I (25)</th>
+                              <th className="p-4">Term Exam - II (25)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200">
+                            {students.map(s => {
+                              const rec = getAcademicRecord(s.usn, selectedAcademicCourse);
+                              const pct = rec.totalClasses > 0 ? Math.round((rec.attended / rec.totalClasses) * 100) : 0;
+                              return (
+                                <tr key={s.id} className="hover:bg-slate-50">
+                                  <td className="p-4 font-mono font-bold text-blue-700">{s.usn}</td>
+                                  <td className="p-4 font-bold text-slate-800">{s.name}</td>
+                                  <td className="p-4 font-semibold text-slate-700">{rec.attended} / {rec.totalClasses}</td>
+                                  <td className="p-4">
+                                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${
+                                      pct >= 75 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+                                    }`}>{pct}%</span>
+                                  </td>
+                                  {permissions.canEditAcademics && (
+                                    <td className="p-4 space-x-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMarkAttendance(s.usn, selectedAcademicCourse, true)}
+                                        className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded font-bold text-[11px]"
+                                      >
+                                        + Present
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMarkAttendance(s.usn, selectedAcademicCourse, false)}
+                                        className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded font-bold text-[11px]"
+                                      >
+                                        + Absent
+                                      </button>
+                                    </td>
+                                  )}
+                                  <td className="p-4">
+                                    {permissions.canEditAcademics ? (
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="25"
+                                        value={rec.cie1}
+                                        onChange={(e) => handleUpdateCieScore(s.usn, selectedAcademicCourse, 'cie1', e.target.value)}
+                                        className="w-16 px-2 py-1 bg-slate-50 border border-slate-300 rounded text-xs font-bold text-center"
+                                      />
+                                    ) : (
+                                      <span className="font-bold">{rec.cie1} / 25</span>
+                                    )}
+                                  </td>
+                                  <td className="p-4">
+                                    {permissions.canEditAcademics ? (
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="25"
+                                        value={rec.cie2}
+                                        onChange={(e) => handleUpdateCieScore(s.usn, selectedAcademicCourse, 'cie2', e.target.value)}
+                                        className="w-16 px-2 py-1 bg-slate-50 border border-slate-300 rounded text-xs font-bold text-center"
+                                      />
+                                    ) : (
+                                      <span className="font-bold">{rec.cie2} / 25</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* --- 3. SLOT-BASED BOOKINGS & APPROVAL QUEUE --- */}
+              {activeTab === 'bookings' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
+                  <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit">
+                    <div className="mb-5">
+                      <h3 className="text-sm font-bold text-slate-800">Slot-Based Reservation Engine</h3>
+                      <p className="text-xs text-slate-500">Checks conflicts by exact Facility, Date, and Period Slot.</p>
+                    </div>
+
+                    {bookingStatusMsg && (
+                      <div className={`mb-4 p-3 rounded-lg text-xs font-semibold border ${
+                        bookingStatusMsg.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      }`}>
+                        {bookingStatusMsg.text}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSimulateBooking} className="space-y-3.5">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">Select Facility / Room</label>
+                        <select
+                          value={bookingDetails.resourceId}
+                          onChange={(e) => setBookingDetails({ ...bookingDetails, resourceId: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                        >
+                          {resources.map(r => (
+                            <option key={r.id} value={r.id}>{r.name} ({r.capacity} Seats)</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">Reserved By</label>
+                        <input
+                          type="text"
+                          value={bookingDetails.user}
+                          onChange={(e) => setBookingDetails({ ...bookingDetails, user: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-700 font-semibold"
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Date</label>
+                          <input
+                            type="date"
+                            value={bookingDetails.date}
+                            onChange={(e) => setBookingDetails({ ...bookingDetails, date: e.target.value })}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Time Slot</label>
+                          <select
+                            value={bookingDetails.timeSlot}
+                            onChange={(e) => setBookingDetails({ ...bookingDetails, timeSlot: e.target.value })}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                          >
+                            <option>08:00 am To 8.50 am</option>
+                            <option>08.50 am To 9.40 am</option>
+                            <option>10.10 am To 11.00 am</option>
+                            <option>11.00 am To 11.50 am</option>
+                            <option>01.40 pm To 2.30 pm</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">Purpose / Event Title</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. OS Mini-Project Lab / ACM Workshop"
+                          value={bookingDetails.purpose}
+                          onChange={(e) => setBookingDetails({ ...bookingDetails, purpose: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                          required
+                        />
+                      </div>
+
+                      <button type="submit" className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all">
+                        {permissions.canApproveBookings ? 'Confirm & Approve Slot' : 'Submit Booking Request'}
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm h-fit">
+                    <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800">Active Slot Reservations & Approval Queue ({bookings.length})</h3>
+                        <p className="text-xs text-slate-500">Admin & Staff can approve or reject pending student/faculty slot requests.</p>
+                      </div>
+                    </div>
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                        <tr>
+                          <th className="p-3.5">Facility & Purpose</th>
+                          <th className="p-3.5">Date & Slot</th>
+                          <th className="p-3.5">Requested By</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {bookings.map(b => (
+                          <tr key={b.id} className="hover:bg-slate-50">
+                            <td className="p-3.5">
+                              <span className="font-bold text-slate-800 block">{b.resourceName}</span>
+                              <span className="text-[11px] text-slate-500">{b.purpose}</span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className="font-semibold text-slate-700 block">{b.date}</span>
+                              <span className="text-[11px] font-mono text-slate-500">{b.timeSlot}</span>
+                            </td>
+                            <td className="p-3.5 text-slate-600">{b.bookedBy}</td>
+                            <td className="p-3.5">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                b.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                b.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}>{b.status}</span>
+                            </td>
+                            <td className="p-3.5 text-right space-x-1">
+                              {permissions.canApproveBookings && b.status === 'Pending' && (
+                                <>
+                                  <button type="button" onClick={() => handleBookingStatusChange(b.id, 'Approved')} className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded font-bold text-[11px]">Approve</button>
+                                  <button type="button" onClick={() => handleBookingStatusChange(b.id, 'Rejected')} className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded font-bold text-[11px]">Reject</button>
+                                </>
+                              )}
+                              {(permissions.canApproveBookings || b.bookedBy.includes(currentUser.name)) && (
+                                <button type="button" onClick={() => handleCancelBooking(b.id)} className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-semibold text-[11px]">Cancel</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* --- 4. DIGITAL NOTICE BOARD & STUDY MATERIAL HUB --- */}
+              {activeTab === 'notices' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Digital Notice Board & Study Material Hub ({filteredNotices.length})</h3>
+                      <p className="text-xs text-slate-500">Circulars, lab manuals, and assignment deadlines tagged by subject code.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={selectedNoticeCourse}
+                        onChange={(e) => setSelectedNoticeCourse(e.target.value)}
+                        className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700"
+                      >
+                        <option value="ALL">All Subjects & General</option>
+                        {courses.map(c => (
+                          <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
+                        ))}
+                      </select>
+                      {permissions.canPostNotices && (
+                        <button type="button" onClick={() => setModalType('addNotice')} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-2 shadow-sm">
+                          <Icon name="plus" className="w-4 h-4" />
+                          <span>Post Notice / Material</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredNotices.map(n => (
+                      <div key={n.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 rounded font-mono font-bold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200">{n.courseCode}</span>
+                              <span className={`px-2 py-0.5 rounded font-bold text-[10px] border ${
+                                n.category === 'Assignment' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                n.category === 'Study Material' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                'bg-purple-50 text-purple-700 border-purple-200'
+                              }`}>{n.category}</span>
+                            </div>
+                            {permissions.canPostNotices && (
+                              <button type="button" onClick={() => handleDeleteNotice(n.id)} className="text-slate-400 hover:text-rose-600">
+                                <Icon name="trash" className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-800">{n.title}</h4>
+                          <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">{n.content}</p>
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                          <span>Posted by: <strong className="text-slate-700">{n.author}</strong></span>
+                          <span className="font-semibold text-rose-600">Due: {n.dueDate}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* --- 5. STUDENTS TAB + CSV BULK IMPORT & EXPORT --- */}
+              {activeTab === 'students' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Student Directory ({filteredStudents.length})</h3>
+                      <p className="text-xs text-slate-500">Students sign in with their USN Number and password assigned by Admin or Staff.</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button type="button" onClick={handleExportStudentsCsv} className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center space-x-1.5">
+                        <Icon name="download" className="w-4 h-4 text-slate-600" />
+                        <span>Export CSV</span>
+                      </button>
+                      {permissions.canManageStudents && (
+                        <>
+                          <button type="button" onClick={() => setModalType('bulkCsvStudent')} className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm">
+                            <Icon name="upload" className="w-4 h-4" />
+                            <span>Bulk CSV Import</span>
+                          </button>
+                          <button type="button" onClick={() => setModalType('addStudent')} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm">
+                            <Icon name="plus" className="w-4 h-4" />
+                            <span>Register Student</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                        <tr>
+                          <th className="p-4">USN Number</th>
+                          <th className="p-4">Name / ID</th>
+                          <th className="p-4">Email Address</th>
+                          {permissions.canManageStudents && <th className="p-4">Login Password</th>}
+                          <th className="p-4">Department</th>
+                          <th className="p-4">Status</th>
+                          <th className="p-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {filteredStudents.map(s => (
+                          <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-4 font-mono font-bold text-blue-700">{s.usn || '—'}</td>
+                            <td className="p-4">
+                              <span className="font-bold text-slate-800 block">{s.name}</span>
+                              <span className="text-slate-400 text-[11px]">{s.id} • {s.phone}</span>
+                            </td>
+                            <td className="p-4 text-slate-600">{s.email}</td>
+                            {permissions.canManageStudents && (
+                              <td className="p-4 font-mono text-[11px] text-indigo-700 bg-indigo-50/40">{s.password}</td>
+                            )}
+                            <td className="p-4 text-slate-600">{s.department}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-0.5 rounded font-semibold text-[10px] border ${
+                                s.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}>{s.status}</span>
+                            </td>
+                            <td className="p-4 text-right space-x-2">
+                              {permissions.canManageStudents ? (
+                                <>
+                                  <button type="button" onClick={() => { setEditingStudent(s); setModalType('editStudent'); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded font-semibold text-[11px]">
+                                    <Icon name="edit" className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button type="button" onClick={() => handleDeleteStudent(s.id)} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 rounded font-semibold text-[11px]">
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                    <span>Delete</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-slate-400 text-[11px] italic">View Only</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* --- FACULTY TAB --- */}
+              {activeTab === 'faculty' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Faculty Directory ({filteredFaculty.length})</h3>
+                      <p className="text-xs text-slate-500">Course coordinators for III Sem B.Tech CSE (CS2B).</p>
+                    </div>
+                    {permissions.canManageFaculty && (
+                      <button type="button" onClick={() => setModalType('addFaculty')} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-2 shadow-sm">
+                        <Icon name="plus" className="w-4 h-4" />
+                        <span>Register Faculty</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                        <tr>
+                          <th className="p-4">Name / ID</th>
+                          {permissions.canManageFaculty && <th className="p-4">Login Password</th>}
+                          <th className="p-4">Designation</th>
+                          <th className="p-4">Course Coordinator</th>
+                          <th className="p-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {filteredFaculty.map(f => (
+                          <tr key={f.id} className="hover:bg-slate-50/80">
+                            <td className="p-4">
+                              <span className="font-bold text-slate-800 block">{f.name}</span>
+                              <span className="text-slate-400 text-[11px]">{f.id} • {f.email}</span>
+                            </td>
+                            {permissions.canManageFaculty && (
+                              <td className="p-4 font-mono text-[11px] text-rose-700 bg-rose-50/40">{f.password}</td>
+                            )}
+                            <td className="p-4 text-slate-600 font-semibold">{f.designation}</td>
+                            <td className="p-4 text-slate-600">{f.courseCoordinator}</td>
+                            <td className="p-4 text-right space-x-2">
+                              {permissions.canManageFaculty ? (
+                                <>
+                                  <button type="button" onClick={() => { setEditingFaculty(f); setModalType('editFaculty'); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded font-semibold text-[11px]">
+                                    <Icon name="edit" className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button type="button" onClick={() => handleDeleteFaculty(f.id)} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 rounded font-semibold text-[11px]">
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                    <span>Delete</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-slate-400 text-[11px] italic">View Only</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* --- COURSES TAB --- */}
+              {activeTab === 'courses' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Course Curriculum ({filteredCourses.length}) • Total {totalCourseCredits} Credits</h3>
+                      <p className="text-xs text-slate-500">III Semester B.Tech CSE (CS2B) subject allocation and L-T-P credits.</p>
+                    </div>
+                    {permissions.canManageCourses && (
+                      <button type="button" onClick={() => setModalType('addCourse')} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-2 shadow-sm">
+                        <Icon name="plus" className="w-4 h-4" />
+                        <span>Add Course</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                        <tr>
+                          <th className="p-4">Subject Code & Name</th>
+                          <th className="p-4">Course Coordinator</th>
+                          <th className="p-4">L-T-P</th>
+                          <th className="p-4">Credits</th>
+                          <th className="p-4">Status</th>
+                          <th className="p-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {filteredCourses.map(c => (
+                          <tr key={c.id} className="hover:bg-slate-50/80">
+                            <td className="p-4">
+                              <span className="font-bold text-slate-800 block">{c.title}</span>
+                              <span className="text-slate-400 text-[11px] font-mono">{c.id}</span>
+                            </td>
+                            <td className="p-4 text-slate-600 font-medium">{c.faculty}</td>
+                            <td className="p-4 text-slate-600 font-mono text-[11px]">{c.ltp}</td>
+                            <td className="p-4 text-slate-600 font-semibold">{c.credits} Credits</td>
+                            <td className="p-4">
+                              <span className="px-2 py-0.5 rounded font-semibold bg-blue-50 text-blue-700 border border-blue-200 text-[10px]">{c.status}</span>
+                            </td>
+                            <td className="p-4 text-right space-x-2">
+                              {permissions.canManageCourses ? (
+                                <>
+                                  <button type="button" onClick={() => { setEditingCourse(c); setModalType('editCourse'); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded font-semibold text-[11px]">
+                                    <Icon name="edit" className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button type="button" onClick={() => handleDeleteCourse(c.id)} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 rounded font-semibold text-[11px]">
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                    <span>Delete</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-slate-400 text-[11px] italic">View Only</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* --- RESOURCES TAB --- */}
+              {activeTab === 'resources' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Facilities & Resources ({filteredResources.length})</h3>
+                      <p className="text-xs text-slate-500">Classrooms, laboratories, and campus facilities.</p>
+                    </div>
+                    {permissions.canManageResources && (
+                      <button type="button" onClick={() => setModalType('addResource')} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-2 shadow-sm">
+                        <Icon name="plus" className="w-4 h-4" />
+                        <span>Add Resource</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                        <tr>
+                          <th className="p-4">Facility Name / ID</th>
+                          <th className="p-4">Category</th>
+                          <th className="p-4">Capacity</th>
+                          <th className="p-4">Specifications</th>
+                          <th className="p-4">Status</th>
+                          <th className="p-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {filteredResources.map(r => (
+                          <tr key={r.id} className="hover:bg-slate-50/80">
+                            <td className="p-4">
+                              <span className="font-bold text-slate-800 block">{r.name}</span>
+                              <span className="text-slate-400 text-[11px]">{r.id}</span>
+                            </td>
+                            <td className="p-4 text-slate-600">{r.category}</td>
+                            <td className="p-4 text-slate-600 font-semibold">{r.capacity} Seats</td>
+                            <td className="p-4 text-slate-500 text-[11px]">{r.specs}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-0.5 rounded font-semibold text-[10px] border ${
+                                r.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}>{r.status}</span>
+                            </td>
+                            <td className="p-4 text-right space-x-2">
+                              {permissions.canManageResources ? (
+                                <>
+                                  <button type="button" onClick={() => { setEditingResource(r); setModalType('editResource'); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded font-semibold text-[11px]">
+                                    <Icon name="edit" className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button type="button" onClick={() => handleDeleteResource(r.id)} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 rounded font-semibold text-[11px]">
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                    <span>Delete</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <button type="button" onClick={() => { setBookingDetails(prev => ({ ...prev, resourceId: r.id })); setActiveTab('bookings'); }} className="px-2.5 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded font-semibold text-[11px]">Book Slot</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* --- ACTIVITIES TAB --- */}
+              {activeTab === 'activities' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Term Examinations & Campus Events ({filteredActivities.length})</h3>
+                      <p className="text-xs text-slate-500">Scheduled examinations and student chapter activities.</p>
+                    </div>
+                    {permissions.canManageActivities && (
+                      <button type="button" onClick={() => setModalType('addActivity')} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-2 shadow-sm">
+                        <Icon name="plus" className="w-4 h-4" />
+                        <span>Add Event</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                        <tr>
+                          <th className="p-4">Event Name</th>
+                          <th className="p-4">Date & Time</th>
+                          <th className="p-4">Venue</th>
+                          <th className="p-4">Organizer</th>
+                          <th className="p-4">Status</th>
+                          <th className="p-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {filteredActivities.map(a => (
+                          <tr key={a.id} className="hover:bg-slate-50/80">
+                            <td className="p-4">
+                              <span className="font-bold text-slate-800 block">{a.name}</span>
+                              <span className="text-slate-400 text-[11px]">{a.id}</span>
+                            </td>
+                            <td className="p-4 text-slate-600">{a.date} at {a.time}</td>
+                            <td className="p-4 text-slate-600 font-semibold">{a.venue}</td>
+                            <td className="p-4 text-slate-600">{a.organizer}</td>
+                            <td className="p-4">
+                              <span className="px-2 py-0.5 rounded font-semibold bg-purple-50 text-purple-700 border border-purple-200 text-[10px]">{a.status}</span>
+                            </td>
+                            <td className="p-4 text-right space-x-2">
+                              {permissions.canManageActivities ? (
+                                <>
+                                  <button type="button" onClick={() => { setEditingActivity(a); setModalType('editActivity'); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded font-semibold text-[11px]">
+                                    <Icon name="edit" className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button type="button" onClick={() => handleDeleteActivity(a.id)} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 rounded font-semibold text-[11px]">
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                    <span>Delete</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-slate-400 text-[11px] italic">View Only</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </main>
+
+          {/* --- MODALS --- */}
+          {modalType && (
+            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fade-in border border-slate-100">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-800 text-sm capitalize">
+                    {modalType.replace(/([A-Z])/g, ' $1')}
+                  </h3>
+                  <button type="button" onClick={() => setModalType(null)} aria-label="Close modal" className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                </div>
+
+                {/* BULK CSV STUDENT IMPORT MODAL */}
+                {modalType === 'bulkCsvStudent' && permissions.canManageStudents && (
+                  <form onSubmit={handleBulkCsvImport} className="space-y-3">
+                    <p className="text-xs text-slate-500">
+                      Paste one student per line in CSV format: <code className="bg-slate-100 px-1 rounded">USN, Name, Email, Password, Phone</code>
+                    </p>
+                    <textarea
+                      rows="5"
+                      value={csvInput}
+                      onChange={(e) => setCsvInput(e.target.value)}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                    <button type="submit" className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-md">
+                      Import Students from CSV
+                    </button>
+                  </form>
+                )}
+
+                {/* EDIT TIMETABLE SLOT MODAL */}
+                {modalType === 'editTimetableSlot' && editingSlot && permissions.canEditTimetable && (
+                  <form onSubmit={handleSaveTimetableSlot} className="space-y-3">
+                    <div className="text-xs text-slate-500 font-semibold">{editingSlot.day} • {editingSlot.slot}</div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Subject Code</label>
+                      <input type="text" value={editingSlot.code} onChange={e => setEditingSlot({...editingSlot, code: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono" required />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Subject / Lab Title</label>
+                      <input type="text" value={editingSlot.subject} onChange={e => setEditingSlot({...editingSlot, subject: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Faculty</label>
+                        <input type="text" value={editingSlot.faculty} onChange={e => setEditingSlot({...editingSlot, faculty: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Room / Lab</label>
+                        <input type="text" value={editingSlot.room} onChange={e => setEditingSlot({...editingSlot, room: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">Save Timetable Slot</button>
+                  </form>
+                )}
+
+                {/* ADD NOTICE MODAL */}
+                {modalType === 'addNotice' && permissions.canPostNotices && (
+                  <form onSubmit={handleAddNotice} className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Title</label>
+                      <input type="text" placeholder="e.g. OS Lab Assignment 2" value={newNotice.title} onChange={e => setNewNotice({...newNotice, title: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Subject Code</label>
+                        <select value={newNotice.courseCode} onChange={e => setNewNotice({...newNotice, courseCode: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                          <option value="ALL">ALL (General)</option>
+                          {courses.map(c => <option key={c.id} value={c.id}>{c.id}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Category</label>
+                        <select value={newNotice.category} onChange={e => setNewNotice({...newNotice, category: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                          <option>Circular</option>
+                          <option>Assignment</option>
+                          <option>Study Material</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Due Date</label>
+                      <input type="date" value={newNotice.dueDate} onChange={e => setNewNotice({...newNotice, dueDate: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Details / Instructions</label>
+                      <textarea rows="3" value={newNotice.content} onChange={e => setNewNotice({...newNotice, content: e.target.value})} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    </div>
+                    <button type="submit" className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">Publish to Notice Hub</button>
+                  </form>
+                )}
+
+                {/* ADD STUDENT MODAL */}
+                {modalType === 'addStudent' && permissions.canManageStudents && (
+                  <form onSubmit={handleAddStudent} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">USN Number</label>
+                        <input type="text" placeholder="24GMU23CS005" value={newStudent.usn} onChange={e => setNewStudent({...newStudent, usn: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono uppercase" required />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Student Full Name</label>
+                        <input type="text" value={newStudent.name} onChange={e => setNewStudent({...newStudent, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Email</label>
+                        <input type="email" value={newStudent.email} onChange={e => setNewStudent({...newStudent, email: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Login Password</label>
+                        <input type="text" value={newStudent.password} onChange={e => setNewStudent({...newStudent, password: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono" required />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Phone</label>
+                      <input type="text" value={newStudent.phone} onChange={e => setNewStudent({...newStudent, phone: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    </div>
+                    <button type="submit" className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">Register Student & USN Login</button>
+                  </form>
+                )}
+
+                {/* EDIT STUDENT MODAL */}
+                {modalType === 'editStudent' && editingStudent && permissions.canManageStudents && (
+                  <form onSubmit={handleUpdateStudent} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">USN Number</label>
+                        <input type="text" value={editingStudent.usn || ''} onChange={e => setEditingStudent({...editingStudent, usn: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono uppercase" required />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Full Name</label>
+                        <input type="text" value={editingStudent.name} onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Email</label>
+                        <input type="email" value={editingStudent.email} onChange={e => setEditingStudent({...editingStudent, email: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Login Password</label>
+                        <input type="text" value={editingStudent.password || ''} onChange={e => setEditingStudent({...editingStudent, password: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono" required />
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">Update Student</button>
+                  </form>
+                )}
+
+                {/* ADD / EDIT FACULTY, COURSE, RESOURCE, ACTIVITY MODALS */}
+                {modalType === 'addFaculty' && permissions.canManageFaculty && (
+                  <form onSubmit={handleAddFaculty} className="space-y-3">
+                    <input type="text" placeholder="Faculty Name" value={newFaculty.name} onChange={e => setNewFaculty({...newFaculty, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="email" placeholder="Email" value={newFaculty.email} onChange={e => setNewFaculty({...newFaculty, email: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" placeholder="Assigned Password" value={newFaculty.password} onChange={e => setNewFaculty({...newFaculty, password: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono" required />
+                    <input type="text" placeholder="Course Coordinator" value={newFaculty.courseCoordinator} onChange={e => setNewFaculty({...newFaculty, courseCoordinator: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Register Faculty</button>
+                  </form>
+                )}
+
+                {modalType === 'editFaculty' && editingFaculty && permissions.canManageFaculty && (
+                  <form onSubmit={handleUpdateFaculty} className="space-y-3">
+                    <input type="text" value={editingFaculty.name} onChange={e => setEditingFaculty({...editingFaculty, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" value={editingFaculty.password || ''} onChange={e => setEditingFaculty({...editingFaculty, password: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono" required />
+                    <input type="text" value={editingFaculty.courseCoordinator || ''} onChange={e => setEditingFaculty({...editingFaculty, courseCoordinator: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Update Faculty</button>
+                  </form>
+                )}
+
+                {modalType === 'addCourse' && (
+                  <form onSubmit={handleAddCourse} className="space-y-3">
+                    <input type="text" placeholder="Subject Code (e.g. UE25CS2305)" value={newCourse.id} onChange={e => setNewCourse({...newCourse, id: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" placeholder="Subject Name" value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" placeholder="Course Coordinator" value={newCourse.faculty} onChange={e => setNewCourse({...newCourse, faculty: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" placeholder="L:3 T:0 P:0" value={newCourse.ltp} onChange={e => setNewCourse({...newCourse, ltp: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono" required />
+                      <input type="number" placeholder="Credits" value={newCourse.credits} onChange={e => setNewCourse({...newCourse, credits: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    </div>
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Save Course</button>
+                  </form>
+                )}
+
+                {modalType === 'editCourse' && editingCourse && (
+                  <form onSubmit={handleUpdateCourse} className="space-y-3">
+                    <input type="text" value={editingCourse.title} onChange={e => setEditingCourse({...editingCourse, title: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" value={editingCourse.faculty} onChange={e => setEditingCourse({...editingCourse, faculty: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="number" value={editingCourse.credits} onChange={e => setEditingCourse({...editingCourse, credits: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Update Course</button>
+                  </form>
+                )}
+
+                {modalType === 'addResource' && (
+                  <form onSubmit={handleAddResource} className="space-y-3">
+                    <input type="text" placeholder="Facility Name" value={newResource.name} onChange={e => setNewResource({...newResource, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" placeholder="Category" value={newResource.category} onChange={e => setNewResource({...newResource, category: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="number" placeholder="Capacity" value={newResource.capacity} onChange={e => setNewResource({...newResource, capacity: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" placeholder="Specifications" value={newResource.specs} onChange={e => setNewResource({...newResource, specs: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" />
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Save Resource</button>
+                  </form>
+                )}
+
+                {modalType === 'editResource' && editingResource && (
+                  <form onSubmit={handleUpdateResource} className="space-y-3">
+                    <input type="text" value={editingResource.name} onChange={e => setEditingResource({...editingResource, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <select value={editingResource.status} onChange={e => setEditingResource({...editingResource, status: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                      <option>Available</option>
+                      <option>Maintenance</option>
+                    </select>
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Update Resource</button>
+                  </form>
+                )}
+
+                {modalType === 'addActivity' && (
+                  <form onSubmit={handleAddActivity} className="space-y-3">
+                    <input type="text" placeholder="Event Name" value={newActivity.name} onChange={e => setNewActivity({...newActivity, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="date" value={newActivity.date} onChange={e => setNewActivity({...newActivity, date: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" placeholder="Venue" value={newActivity.venue} onChange={e => setNewActivity({...newActivity, venue: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" placeholder="Organizer" value={newActivity.organizer} onChange={e => setNewActivity({...newActivity, organizer: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Save Event</button>
+                  </form>
+                )}
+
+                {modalType === 'editActivity' && editingActivity && (
+                  <form onSubmit={handleUpdateActivity} className="space-y-3">
+                    <input type="text" value={editingActivity.name} onChange={e => setEditingActivity({...editingActivity, name: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <input type="text" value={editingActivity.venue} onChange={e => setEditingActivity({...editingActivity, venue: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" required />
+                    <button type="submit" className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Update Event</button>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
